@@ -74,20 +74,21 @@ def remove_client_function_call_id(content: Optional[types.Content]) -> None:
   Args:
     content: Content containing function calls/responses to clean.
   """
-  if content and content.parts:
-    for part in content.parts:
-      if (
-          part.function_call
-          and part.function_call.id
-          and part.function_call.id.startswith(AF_FUNCTION_CALL_ID_PREFIX)
-      ):
-        part.function_call.id = None
-      if (
-          part.function_response
-          and part.function_response.id
-          and part.function_response.id.startswith(AF_FUNCTION_CALL_ID_PREFIX)
-      ):
-        part.function_response.id = None
+  return # https://github.com/google/adk-python/issues/2621 for backward compatibility between models
+  # if content and content.parts:
+  #   for part in content.parts:
+  #     if (
+  #         part.function_call
+  #         and part.function_call.id
+  #         and part.function_call.id.startswith(AF_FUNCTION_CALL_ID_PREFIX)
+  #     ):
+  #       part.function_call.id = None
+  #     if (
+  #         part.function_response
+  #         and part.function_response.id
+  #         and part.function_response.id.startswith(AF_FUNCTION_CALL_ID_PREFIX)
+  #     ):
+  #       part.function_response.id = None
 
 
 def get_long_running_function_calls(
