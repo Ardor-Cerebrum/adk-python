@@ -314,6 +314,7 @@ class DatabaseSessionService(BaseSessionService):
       merged_state = _merge_state(
           storage_app_state.state, storage_user_state.state, session_state
       )
+      is_sqlite = self.db_engine.dialect.name == "sqlite"
       session = storage_session.to_session(
           state=merged_state, is_sqlite=is_sqlite
       )
