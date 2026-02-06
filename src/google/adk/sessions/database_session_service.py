@@ -301,6 +301,7 @@ class DatabaseSessionService(BaseSessionService):
           id=session_id,
           state=session_state,
       )
+      is_sqlite = self.db_engine.dialect.name == "sqlite"
       # We rely on the database default (func.now()) to set create_time and update_time
       # to ensure compatibility with PostgreSQL TIMESTAMP WITHOUT TIME ZONE columns.
       # Explicitly setting timezone-aware datetimes causes DataError in asyncpg.
@@ -314,7 +315,6 @@ class DatabaseSessionService(BaseSessionService):
       merged_state = _merge_state(
           storage_app_state.state, storage_user_state.state, session_state
       )
-      is_sqlite = self.db_engine.dialect.name == "sqlite"
       session = storage_session.to_session(
           state=merged_state, is_sqlite=is_sqlite
       )
@@ -513,14 +513,15 @@ class DatabaseSessionService(BaseSessionService):
         if session_state_delta:
           storage_session.state = storage_session.state | session_state_delta
 
-      # if is_sqlite:
-      storage_session.update_time = datetime.fromtimestamp(event.timestamp)
-      # else:
-      #   # Explicitly setting timezone-aware datetimes causes DataError in asyncpg
-      #   # for TIMESTAMP WITHOUT TIME ZONE columns.
-      #   storage_session.update_time = datetime.fromtimestamp(
-      #       event.timestamp, timezone.utc
-      #   )
+      if is_sqlite:
+        storage_session.update_time = datetime.fromtimestamp(event.timestamp)
+      else:
+        # Explicitly setting timezone-aware datetimes causes DataError in asyncpg
+        # for TIMESTAMP WITHOUT TIME ZONE columns.
+        # storage_session.update_time = datetime.fromtimestamp(
+        #     event.timestamp, timezone.utc
+        # )
+        pass
       sql_session.add(schema.StorageEvent.from_event(session, event))
 
       await sql_session.commit()
