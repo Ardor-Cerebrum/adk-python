@@ -295,18 +295,11 @@ class DatabaseSessionService(BaseSessionService):
         storage_user_state.state = storage_user_state.state | user_state_delta
 
       # Store the session
-      now = datetime.now(timezone.utc)
-      is_sqlite = self.db_engine.dialect.name == "sqlite"
-      if is_sqlite:
-        now = now.replace(tzinfo=None)
-
       storage_session = schema.StorageSession(
           app_name=app_name,
           user_id=user_id,
           id=session_id,
           state=session_state,
-          create_time=now,
-          update_time=now,
       )
       sql_session.add(storage_session)
       await sql_session.commit()
@@ -513,13 +506,7 @@ class DatabaseSessionService(BaseSessionService):
         if session_state_delta:
           storage_session.state = storage_session.state | session_state_delta
 
-      if is_sqlite:
-        update_time = datetime.fromtimestamp(
-            event.timestamp, timezone.utc
-        ).replace(tzinfo=None)
-      else:
-        update_time = datetime.fromtimestamp(event.timestamp)
-      storage_session.update_time = update_time
+      storage_session.update_time = datetime.fromtimestamp(event.timestamp)
       sql_session.add(schema.StorageEvent.from_event(session, event))
 
       await sql_session.commit()
