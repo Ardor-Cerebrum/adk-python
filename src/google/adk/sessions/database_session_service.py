@@ -301,6 +301,12 @@ class DatabaseSessionService(BaseSessionService):
           id=session_id,
           state=session_state,
       )
+      # We rely on the database default (func.now()) to set create_time and update_time
+      # to ensure compatibility with PostgreSQL TIMESTAMP WITHOUT TIME ZONE columns.
+      # Explicitly setting timezone-aware datetimes causes DataError in asyncpg.
+      # storage_session.create_time = datetime.now(timezone.utc)
+      # storage_session.update_time = datetime.now(timezone.utc)
+
       sql_session.add(storage_session)
       await sql_session.commit()
 
@@ -506,7 +512,14 @@ class DatabaseSessionService(BaseSessionService):
         if session_state_delta:
           storage_session.state = storage_session.state | session_state_delta
 
+      # if is_sqlite:
       storage_session.update_time = datetime.fromtimestamp(event.timestamp)
+      # else:
+      #   # Explicitly setting timezone-aware datetimes causes DataError in asyncpg
+      #   # for TIMESTAMP WITHOUT TIME ZONE columns.
+      #   storage_session.update_time = datetime.fromtimestamp(
+      #       event.timestamp, timezone.utc
+      #   )
       sql_session.add(schema.StorageEvent.from_event(session, event))
 
       await sql_session.commit()
